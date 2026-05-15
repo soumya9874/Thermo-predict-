@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply antialiased text-slate-900 bg-slate-50 transition-colors duration-300;
+  }
+}
+
+html.dark {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+html.dark img, 
+html.dark video, 
+html.dark canvas,
+html.dark .recharts-wrapper {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.recharts-reference-area-label {
+  fill: #ef4444;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.dark-grid {
+  background-color: #020617;
+  background-image: 
+    linear-gradient(rgba(15, 23, 42, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.5) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.login-btn-glow {
+  box-shadow: 0 0 20px rgba(0, 210, 210, 0.4);
+  background: linear-gradient(90deg, #00d2d2, #009999);
+}

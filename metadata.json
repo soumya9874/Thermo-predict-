@@ -1,0 +1,6 @@
+{
+  "name": "ThermaPredict",
+  "description": "Enterprise ML Monitor for predictive maintenance of industrial systems.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
