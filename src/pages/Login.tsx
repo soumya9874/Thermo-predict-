@@ -37,8 +37,10 @@ export default function Login() {
     }
     
     setLoading(true)
+    const normalizedEmail = email.trim().toLowerCase()
+    
     if (isAdminMode) {
-       if ((email === "admin@company.com" || email === "demo@company.com") && password === "demo123") {
+       if ((normalizedEmail === "admin@company.com" || normalizedEmail === "demo@company.com") && password === "demo123") {
           if (localStorage.getItem("2fa_enabled") === "true") {
              setShowMfaScreen(true)
              setLoading(false)
@@ -48,13 +50,13 @@ export default function Login() {
           setLoading(false)
           return
        } else {
-          setError("Invalid admin credentials.")
+          setError("Invalid admin credentials. Please use demo@company.com and demo123.")
           setLoading(false)
           return
        }
     } else if (!isSignUp) {
        try {
-          await signInWithEmailAndPassword(auth, email, password)
+          await signInWithEmailAndPassword(auth, normalizedEmail, password)
           if (localStorage.getItem("2fa_enabled") === "true") {
              setShowMfaScreen(true)
              setLoading(false)
@@ -66,7 +68,7 @@ export default function Login() {
        }
     } else {
        try {
-          await createUserWithEmailAndPassword(auth, email, password)
+          await createUserWithEmailAndPassword(auth, normalizedEmail, password)
           navigate('/dashboard')
        } catch (err: any) {
           setError(err.message || "Failed to create account.")
@@ -85,7 +87,13 @@ export default function Login() {
       }
       navigate('/dashboard')
     } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google.")
+      if (err.message?.includes('auth/popup-closed-by-user')) {
+         setError("Popup was closed before completing sign-in.")
+      } else if (err.message?.includes('auth/unauthorized-domain')) {
+         setError("This domain is not authorized for Google Sign-In. Please add it in Firebase Console.")
+      } else {
+         setError(err.message || "Failed to sign in with Google. Ensure Google Sign-In is enabled in Firebase Console.")
+      }
     }
   }
 
@@ -268,6 +276,13 @@ export default function Login() {
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
               </svg>
               Continue with Google
+            </button>
+            <button 
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="w-full mt-4 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white font-medium rounded-lg py-2.5 flex items-center justify-center gap-2 transition-colors"
+            >
+              Auto Login (Demo)
             </button>
           </>
         )}
