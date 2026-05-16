@@ -93,7 +93,7 @@ export default function Dashboard() {
             <button onClick={() => setShowReportModal(true)} className="p-2 border rounded-full bg-white text-slate-500 hover:text-slate-700 shadow-sm relative">
                <FileText className="w-5 h-5" />
             </button>
-            <button onClick={() => alert("Notifications: 2 Critical Alerts")} className="p-2 border rounded-full bg-white text-slate-500 hover:text-slate-700 shadow-sm relative">
+            <button onClick={() => console.log("Notifications: 2 Critical Alerts")} className="p-2 border rounded-full bg-white text-slate-500 hover:text-slate-700 shadow-sm relative">
                <Bell className="w-5 h-5" />
                <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
             </button>

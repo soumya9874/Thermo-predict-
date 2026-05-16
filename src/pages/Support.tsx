@@ -250,7 +250,7 @@ export default function Support() {
                </div>
              </div>
             <div className="flex items-center gap-1 sm:gap-4 overflow-x-auto pr-2 sm:pr-0">
-               <button onClick={() => alert("Model context optimization enabled! Future queries will utilize deeper reasoning tracks.")} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center gap-1 transition-colors border border-blue-100 shrink-0">
+               <button onClick={() => console.log("Model context optimization enabled! Future queries will utilize deeper reasoning tracks.")} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center gap-1 transition-colors border border-blue-100 shrink-0">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                   <span className="hidden lg:inline">Optimize Context</span>
                </button>
