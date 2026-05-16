@@ -3,6 +3,8 @@ import React, { useState, useRef, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { jsPDF } from "jspdf"
 import DarkModeToggle from "../components/DarkModeToggle"
+import { sendPasswordResetEmail } from "firebase/auth"
+import { auth } from "../lib/firebase"
 
 interface AnalysisResult {
     targetName: string;
@@ -43,6 +45,20 @@ export default function Devices() {
   const [activeTab, setActiveTab] = useState<'devices' | 'profile'>('devices')
   const [region, setRegion] = useState("North America")
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+
+  const [profileEmail, setProfileEmail] = useState("admin@company.com")
+  const [roles, setRoles] = useState({
+    systemAdmin: true,
+    deviceManager: true,
+    viewer: false
+  })
+  const [is2faEnabled, setIs2faEnabled] = useState(() => localStorage.getItem("2fa_enabled") === "true")
+
+  const toggle2FA = () => {
+    const newValue = !is2faEnabled
+    setIs2faEnabled(newValue)
+    localStorage.setItem("2fa_enabled", newValue.toString())
+  }
 
   const togglePreference = (index: number) => {
     setPreferences(prev => {
@@ -87,6 +103,31 @@ export default function Devices() {
     })
   }, [devices, searchQuery, typeFilter, statusFilter])
 
+  const handlePasswordReset = async () => {
+    if (!profileEmail || !profileEmail.includes('@')) {
+       alert("Please enter a valid email address.")
+       return
+    }
+    
+    // Check if it's the hardcoded demo account
+    if (profileEmail === "demo@company.com" || profileEmail === "admin@company.com") {
+       alert("Simulated password reset for demo account. No actual email will be sent to this fictitious address.")
+       setPasswordSent(true)
+       setTimeout(() => setPasswordSent(false), 10000)
+       return
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, profileEmail)
+      alert("If an account exists with this email, a password reset link has been sent.")
+      setPasswordSent(true)
+      setTimeout(() => setPasswordSent(false), 10000)
+    } catch (error: any) {
+      console.error("Error sending password reset email:", error)
+      alert(`Failed to send password reset email: ${error.message}`)
+    }
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -105,6 +146,11 @@ export default function Devices() {
       setIsUploading(false)
       setPredictedResult(data)
       setShowResultModal(true)
+      
+      const historyStr = localStorage.getItem('prediction_history');
+      const history = historyStr ? JSON.parse(historyStr) : [];
+      history.push({ filename: file.name, timestamp: new Date().toISOString(), result: data });
+      localStorage.setItem('prediction_history', JSON.stringify(history));
       
       const colorMap: Record<string, string> = {
         CRITICAL: "rose",
@@ -355,11 +401,11 @@ export default function Devices() {
              <p className="text-sm text-slate-500 text-center mb-6">Manage your account preferences and security.</p>
              <div className="space-y-3 mb-6">
                 <DarkModeToggle />
-                <button className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
+                <button onClick={() => {setShowSettingsModal(false); setActiveTab('profile');}} className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
                   Change Password
                   <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
-                <button className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
+                <button onClick={() => {setShowSettingsModal(false); setActiveTab('profile');}} className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
                   Two-Factor Authentication
                   <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
@@ -375,28 +421,28 @@ export default function Devices() {
       )}
 
       {/* Top Header */}
-      <div className="flex justify-between items-center border-b pb-4 relative z-10">
-        <div className="flex gap-6">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center border-b pb-4 relative z-10 gap-4 xl:gap-0">
+        <div className="flex gap-6 border-b xl:border-b-0 w-full xl:w-auto">
           <button 
             onClick={() => setActiveTab('devices')}
-            className={`${activeTab === 'devices' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent hover:text-slate-900'} font-medium border-b-2 pb-4 -mb-[18px] transition-colors`}
+            className={`${activeTab === 'devices' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent hover:text-slate-900'} font-medium border-b-2 pb-4 xl:-mb-[18px] transition-colors`}
           >
             My Devices
           </button>
           <button 
             onClick={() => setActiveTab('profile')}
-            className={`${activeTab === 'profile' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent hover:text-slate-900'} font-medium border-b-2 pb-4 -mb-[18px] transition-colors`}
+            className={`${activeTab === 'profile' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent hover:text-slate-900'} font-medium border-b-2 pb-4 xl:-mb-[18px] transition-colors`}
           >
             Profile
           </button>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full xl:w-auto">
           <button 
              onClick={() => fileInputRef.current?.click()}
              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-full flex items-center gap-2 shadow-sm transition-colors"
           >
              <Upload className="w-4 h-4" />
-             Insert Data / DB
+             Insert <span className="hidden sm:inline">Data / DB</span>
           </button>
           <input 
              type="file" 
@@ -406,23 +452,23 @@ export default function Devices() {
              onChange={handleFileUpload} 
           />
 
-          <div className="relative">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input 
                type="text" 
-               placeholder="Search devices..." 
+               placeholder="Search..." 
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
-               className="pl-9 pr-4 py-2 border rounded-full w-48 lg:w-64 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
+               className="pl-9 pr-4 py-2 border rounded-full w-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
             />
           </div>
-          <div className="relative">
+          <div className="relative shrink-0">
             <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 text-slate-400 border rounded-full hover:bg-slate-50 transition-colors relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
             </button>
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white border rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-80 bg-white border rounded-xl shadow-xl z-50 overflow-hidden">
                 <div className="p-4 border-b bg-slate-50 flex justify-between items-center">
                   <h3 className="font-bold text-slate-800">Notifications</h3>
                   <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
@@ -456,18 +502,18 @@ export default function Devices() {
       {activeTab === 'devices' ? (
         <>
           {/* Filters */}
-          <div className="flex justify-between items-center bg-white p-3 rounded-xl border shadow-sm">
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2 px-4 py-2 text-slate-500 font-medium">
-                <Filter className="w-4 h-4" /> Filters
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-white p-3 rounded-xl border shadow-sm gap-4 lg:gap-0">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex items-center gap-2 px-2 lg:px-4 py-1 text-slate-500 font-medium">
+                <Filter className="w-4 h-4 shrink-0" /> <span className="hidden sm:inline">Filters</span>
               </div>
-              <div className="h-6 w-px bg-slate-200"></div>
+              <div className="hidden lg:block h-6 w-px bg-slate-200"></div>
               <div className="flex items-center gap-2">
                 <span className="text-slate-500 font-medium">Type:</span>
                 <select 
                    value={typeFilter}
                    onChange={(e) => setTypeFilter(e.target.value)}
-                   className="bg-transparent font-bold text-slate-700 focus:outline-none cursor-pointer hover:text-blue-600"
+                   className="bg-transparent font-bold text-slate-700 focus:outline-none cursor-pointer hover:text-blue-600 max-w-[100px] sm:max-w-none text-ellipsis"
                 >
                   <option>All Assets</option>
                   <option>Oven</option>
@@ -645,26 +691,75 @@ export default function Devices() {
            <div className="max-w-xl space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
-                <input type="email" defaultValue="admin@company.com" className="w-full border rounded-lg px-4 py-2 bg-white text-slate-700 shadow-sm" />
+                <input 
+                  type="email" 
+                  value={profileEmail} 
+                  onChange={(e) => setProfileEmail(e.target.value)}
+                  className="w-full border rounded-lg px-4 py-2 bg-white text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
+                />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Role Permissions</label>
-                <div className="flex gap-2">
-                   <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-md text-xs font-bold tracking-wide uppercase">System Admin</span>
-                   <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-bold tracking-wide uppercase">Device Manager</span>
+                <label className="block text-sm font-semibold text-slate-700 mb-3">Role Permissions</label>
+                <div className="space-y-2">
+                   <label className="flex items-center gap-2 cursor-pointer">
+                     <input 
+                       type="checkbox" 
+                       checked={roles.systemAdmin} 
+                       onChange={() => setRoles({...roles, systemAdmin: !roles.systemAdmin})}
+                       className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500" 
+                     />
+                     <span className={`px-3 py-1 rounded-md text-xs font-bold tracking-wide uppercase ${roles.systemAdmin ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>System Admin</span>
+                   </label>
+                   <label className="flex items-center gap-2 cursor-pointer">
+                     <input 
+                       type="checkbox" 
+                       checked={roles.deviceManager} 
+                       onChange={() => setRoles({...roles, deviceManager: !roles.deviceManager})}
+                       className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" 
+                     />
+                     <span className={`px-3 py-1 rounded-md text-xs font-bold tracking-wide uppercase ${roles.deviceManager ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>Device Manager</span>
+                   </label>
+                   <label className="flex items-center gap-2 cursor-pointer">
+                     <input 
+                       type="checkbox" 
+                       checked={roles.viewer} 
+                       onChange={() => setRoles({...roles, viewer: !roles.viewer})}
+                       className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" 
+                     />
+                     <span className={`px-3 py-1 rounded-md text-xs font-bold tracking-wide uppercase ${roles.viewer ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>Read-only Viewer</span>
+                   </label>
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Change Password</label>
                 {!passwordSent ? (
-                  <button onClick={() => setPasswordSent(true)} className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                    Update Password
+                  <button onClick={handlePasswordReset} className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">
+                    Change Password
                   </button>
                 ) : (
                   <div className="text-sm font-medium text-emerald-600 flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-200 inline-flex">
                      <CheckCircle2 className="w-4 h-4" /> Password update link sent to your email!
                   </div>
                 )}
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Two-Factor Authentication (2FA)</label>
+                <div className="flex items-center gap-4 border border-slate-200 rounded-xl p-4 bg-slate-50">
+                   <div className="flex-1">
+                     <div className="text-sm font-medium text-slate-900">Secure your account</div>
+                     <div className="text-xs text-slate-500 mt-1">Require an extra security code during login.</div>
+                   </div>
+                   <button 
+                     onClick={toggle2FA}
+                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                       is2faEnabled ? 'bg-emerald-500' : 'bg-slate-300'
+                     }`}
+                   >
+                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                       is2faEnabled ? 'translate-x-6' : 'translate-x-1'
+                     }`} />
+                   </button>
+                </div>
               </div>
            </div>
         </div>

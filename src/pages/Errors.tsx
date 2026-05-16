@@ -4,12 +4,21 @@ import { Download, Wind, Wrench, AlertTriangle, Info, MapPin, X } from "lucide-r
 export default function Errors() {
   const [modalContent, setModalContent] = useState<{title: string, desc: string} | null>(null)
   const [severityFilter, setSeverityFilter] = useState('All')
+  const [timeFilter, setTimeFilter] = useState('24h')
   
   const handleDownload = () => {
-    // Simulate download
+    const errorLogs = "ERR_THERMAL_EXC_09\nERR_VIBE_WARN_42\nERR_CAL_DRIFT_02";
+    const predictionHistory = JSON.parse(localStorage.getItem('prediction_history') || '[]');
+    
+    let exportData = "=== Error Logs ===\n" + errorLogs + "\n\n";
+    if (predictionHistory.length > 0) {
+      exportData += "=== System Generated Results ===\n";
+      exportData += JSON.stringify(predictionHistory, null, 2);
+    }
+
     const link = document.createElement("a");
-    link.href = "data:text/plain;charset=utf-8," + encodeURIComponent("Error Logs Export\n\nERR_THERMAL_EXC_09\nERR_VIBE_WARN_42\nERR_CAL_DRIFT_02");
-    link.download = "error_logs.txt";
+    link.href = "data:text/plain;charset=utf-8," + encodeURIComponent(exportData);
+    link.download = "system_export.txt";
     link.click();
   };
 
@@ -53,12 +62,23 @@ export default function Errors() {
             <button onClick={() => setSeverityFilter('Info')} className={`px-4 py-1.5 text-sm font-medium rounded-md ${severityFilter === 'Info' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>Info</button>
          </div>
          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium">
-               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <div className="relative">
+               <svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                </svg>
-               Last 24 Hours
-            </button>
+               <select 
+                 className="pl-9 pr-8 py-2 border rounded-lg bg-white shadow-sm text-sm font-medium appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 value={timeFilter}
+                 onChange={(e) => setTimeFilter(e.target.value)}
+               >
+                 <option value="24h">Last 24 Hours</option>
+                 <option value="48h">Last 48 Hours</option>
+                 <option value="7d">Last 7 Days</option>
+               </select>
+               <svg className="w-4 h-4 absolute right-3 top-2.5 text-slate-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+               </svg>
+             </div>
             <button onClick={handleDownload} className="p-2 border rounded-lg bg-white shadow-sm">
                <Download className="w-5 h-5 text-slate-600" />
             </button>

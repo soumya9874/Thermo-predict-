@@ -60,11 +60,11 @@ export default function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Top Navigation */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
         <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <input type="text" placeholder="Search devices..." className="pl-10 pr-4 py-2 border rounded-full w-80 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
+          <div className="relative flex-1 md:flex-none">
+            <input type="text" placeholder="Search devices..." className="pl-10 pr-4 py-2 border rounded-full w-full md:w-80 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <svg className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -72,35 +72,37 @@ export default function Dashboard() {
           <div className="flex gap-1 bg-white p-1 rounded-lg border shadow-sm">
             <button 
               onClick={() => setTimeRange('Live')}
-              className={`px-4 py-1 text-sm font-medium rounded-md ${timeRange === 'Live' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+              className={`px-3 md:px-4 py-1 text-sm font-medium rounded-md ${timeRange === 'Live' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
             >
               Live
             </button>
             <button 
               onClick={() => setTimeRange('24h')}
-              className={`px-4 py-1 text-sm font-medium rounded-md ${timeRange === '24h' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+              className={`px-3 md:px-4 py-1 text-sm font-medium rounded-md ${timeRange === '24h' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
             >
               24h
             </button>
             <button 
               onClick={() => setTimeRange('7d')}
-              className={`px-4 py-1 text-sm font-medium rounded-md ${timeRange === '7d' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+              className={`px-3 md:px-4 py-1 text-sm font-medium rounded-md ${timeRange === '7d' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
             >
               7d
             </button>
           </div>
-          <button onClick={() => setShowReportModal(true)} className="p-2 border rounded-full bg-white text-slate-500 hover:text-slate-700 shadow-sm relative">
-             <FileText className="w-5 h-5" />
-          </button>
-          <button onClick={() => alert("Notifications: 2 Critical Alerts")} className="p-2 border rounded-full bg-white text-slate-500 hover:text-slate-700 shadow-sm relative">
-             <Bell className="w-5 h-5" />
-             <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowReportModal(true)} className="p-2 border rounded-full bg-white text-slate-500 hover:text-slate-700 shadow-sm relative">
+               <FileText className="w-5 h-5" />
+            </button>
+            <button onClick={() => alert("Notifications: 2 Critical Alerts")} className="p-2 border rounded-full bg-white text-slate-500 hover:text-slate-700 shadow-sm relative">
+               <Bell className="w-5 h-5" />
+               <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: 'TOTAL DEVICES', val: '1,284', change: timeRange === 'Live' ? '+2 connected' : timeRange === '24h' ? '+12 today' : '+45 this week', trend: 'up', icon: Activity, color: 'text-blue-600', iconBg: 'bg-blue-50' },
           { label: 'ACTIVE ALERTS', val: timeRange === 'Live' ? '02' : timeRange === '24h' ? '03' : '12', change: timeRange === 'Live' ? '1 Critical' : timeRange === '24h' ? '2 Critical' : '5 Critical', trend: 'down', icon: AlertCircle, color: 'text-rose-600', iconBg: 'bg-rose-50' },
@@ -132,9 +134,9 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart */}
-        <div className="col-span-2 bg-white p-6 rounded-xl border shadow-sm flex flex-col">
+        <div className="lg:col-span-2 bg-white p-6 rounded-xl border shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="font-semibold text-lg">Temperature Fluctuations</h3>
@@ -247,7 +249,7 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className="p-4 bg-slate-50 rounded-xl border">
                     <h3 className="text-sm font-bold text-slate-500 mb-1 tracking-wider uppercase">Active Alerts</h3>
                     <p className="text-2xl font-bold text-slate-800">{timeRange === '24h' ? '03' : timeRange === '7d' ? '12' : '42'} Total</p>
@@ -262,21 +264,21 @@ export default function Dashboard() {
                <div>
                   <h3 className="font-bold text-lg mb-3">Failure Predictions</h3>
                   <ul className="space-y-3">
-                    <li className="p-3 border rounded-lg bg-white flex justify-between items-center">
+                    <li className="p-3 border rounded-lg bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
                        <div>
                           <p className="font-bold text-slate-800">Chiller Unit #42</p>
                           <p className="text-xs text-slate-500">Thermal Drift Detected</p>
                        </div>
                        <span className="px-2 py-1 bg-rose-100 text-rose-700 text-xs font-bold rounded">High Risk</span>
                     </li>
-                    <li className="p-3 border rounded-lg bg-white flex justify-between items-center">
+                    <li className="p-3 border rounded-lg bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
                        <div>
                           <p className="font-bold text-slate-800">Rotary Motor #12</p>
                           <p className="text-xs text-slate-500">Vibration Anomaly</p>
                        </div>
                        <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded">Medium Risk</span>
                     </li>
-                    <li className="p-3 border rounded-lg bg-white flex justify-between items-center">
+                    <li className="p-3 border rounded-lg bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
                        <div>
                           <p className="font-bold text-slate-800">HVAC System B</p>
                           <p className="text-xs text-slate-500">Filter Replacement Due</p>
@@ -293,9 +295,9 @@ export default function Dashboard() {
                  </p>
                </div>
             </div>
-            <div className="p-6 border-t bg-slate-50 flex justify-end gap-3">
-              <button className="px-4 py-2 border rounded-lg hover:bg-slate-100 font-medium text-slate-700 transition">Export CSV</button>
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">Download PDF</button>
+            <div className="p-6 border-t bg-slate-50 flex flex-col sm:flex-row justify-end gap-3">
+              <button className="w-full sm:w-auto px-4 py-2 border rounded-lg hover:bg-slate-100 font-medium text-slate-700 transition">Export CSV</button>
+              <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">Download PDF</button>
             </div>
           </div>
         </div>

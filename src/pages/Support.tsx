@@ -92,40 +92,38 @@ export default function Support() {
     }
   }
 
-  const [conversations, setConversations] = useState([
-     { id: 1, title: 'Sensor E-104 Thermal Deviation', desc: 'Checking historical data for chiller units...', status: 'ACTIVE', time: '2m ago', messages: [{role: 'user', text: "Explain E-104"}, {role: 'bot', text: "Sensor E-104 on Chiller Unit #42 is showing a 15% deviation in thermal reads."}] },
-     { id: 2, title: 'Weekly Maintenance Report', desc: 'Data from last week', status: 'ARCHIVED', time: 'Yesterday', messages: [{role: 'user', text: "Give me the weekly maintenance report."}, {role: 'bot', text: "Here is your weekly report. All systems nominal except HVAC B."}] },
-     { id: 3, title: 'Industrial Oven Calibration', desc: 'Calibration steps', status: 'ARCHIVED', time: 'Mar 12', messages: [{role: 'user', text: "How do I calibrate the industrial oven?"}, {role: 'bot', text: "Please follow standard procedure OP-32. Ensure power is disconnected before starting."}] },
-  ])
+  const getInitialConversations = () => {
+    const saved = localStorage.getItem('chat_conversations');
+    if (saved) {
+       try {
+           const parsed = JSON.parse(saved);
+           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+       } catch (e) {
+           console.error('Failed to parse conversations', e);
+       }
+    }
+    return [
+       { id: 1, title: 'Sensor E-104 Thermal Deviation', desc: 'Checking historical data for chiller units...', status: 'ACTIVE', time: '2m ago', messages: [{role: 'user', text: "Explain E-104"}, {role: 'bot', text: "Sensor E-104 on Chiller Unit #42 is showing a 15% deviation in thermal reads."}] },
+       { id: 2, title: 'Weekly Maintenance Report', desc: 'Data from last week', status: 'ARCHIVED', time: 'Yesterday', messages: [{role: 'user', text: "Give me the weekly maintenance report."}, {role: 'bot', text: "Here is your weekly report. All systems nominal except HVAC B."}] },
+       { id: 3, title: 'Industrial Oven Calibration', desc: 'Calibration steps', status: 'ARCHIVED', time: 'Mar 12', messages: [{role: 'user', text: "How do I calibrate the industrial oven?"}, {role: 'bot', text: "Please follow standard procedure OP-32. Ensure power is disconnected before starting."}] },
+    ]
+  }
+
+  const [conversations, setConversations] = useState<{id: number, title: string, desc: string, status: string, time: string, messages: {role: string, text: string}[]}[]>(getInitialConversations)
+
+  useEffect(() => {
+    localStorage.setItem('chat_conversations', JSON.stringify(conversations));
+  }, [conversations]);
 
   const filteredConversations = conversations.filter(c => c.title.toLowerCase().includes(searchHistory.toLowerCase()) || c.desc.toLowerCase().includes(searchHistory.toLowerCase()))
 
-  const saveCurrentToHistory = () => {
-    const firstUserMsg = messages.find((m: any) => m.role === 'user')
-    const newConv = {
-      id: Date.now(),
-      title: firstUserMsg ? firstUserMsg.text.slice(0, 30) + (firstUserMsg.text.length > 30 ? '...' : '') : 'New Session',
-      desc: `${messages.length} messages`,
-      status: 'ARCHIVED',
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-      messages: [...messages]
-    }
-    setConversations(prev => [newConv, ...prev.map(c => c.status === 'ACTIVE' ? {...c, status: 'ARCHIVED'} : c)])
-  }
-
   const handleConversationClick = (conv: typeof conversations[0]) => {
-     if (messages.length > 0 && !activeConversationId) {
-        saveCurrentToHistory()
-     }
      setMessages(conv.messages as any)
      setActiveConversationId(conv.id)
      setConversations(prev => prev.map(c => c.id === conv.id ? {...c, status: 'ACTIVE'} : {...c, status: 'ARCHIVED'}))
   }
 
   const handleNewConversation = () => {
-    if (messages.length > 0 && !activeConversationId) {
-      saveCurrentToHistory()
-    }
     setMessages([])
     setActiveConversationId(null)
     setConversations(prev => prev.map(c => ({...c, status: 'ARCHIVED'})))
@@ -136,6 +134,20 @@ export default function Support() {
       setConversations(prev => prev.map(c => 
         c.id === activeConversationId ? { ...c, messages: messages, desc: `${messages.length} messages` } : c
       ));
+    } else if (messages.length > 0) {
+      const firstUserMsg = messages.find((m: any) => m.role === 'user')
+      const title = firstUserMsg ? firstUserMsg.text.slice(0, 30) + (firstUserMsg.text.length > 30 ? '...' : '') : 'New Session'
+      const newId = Date.now();
+      const newConv = {
+        id: newId,
+        title,
+        desc: `${messages.length} messages`,
+        status: 'ACTIVE',
+        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        messages: messages as any
+      }
+      setActiveConversationId(newId);
+      setConversations(prev => [newConv, ...prev.map(c => c.status === 'ACTIVE' ? {...c, status: 'ARCHIVED'} : c)]);
     }
   }, [messages, activeConversationId]);
 
@@ -143,6 +155,17 @@ export default function Support() {
   const [showHumanModal, setShowHumanModal] = useState(false)
 
   const chatEndRef = useRef<HTMLDivElement>(null)
+
+  const handleExportTranscript = () => {
+    const chatHistory = JSON.parse(localStorage.getItem('chat_conversations') || '[]');
+    let exportData = "=== Chat Transcripts ===\n\n";
+    exportData += JSON.stringify(chatHistory, null, 2);
+
+    const link = document.createElement("a");
+    link.href = "data:text/plain;charset=utf-8," + encodeURIComponent(exportData);
+    link.download = "chat_transcripts.txt";
+    link.click();
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -178,9 +201,9 @@ export default function Support() {
   }
 
   return (
-    <div className="flex h-full max-h-[calc(100vh-64px)] overflow-hidden rounded-xl border bg-white shadow-sm mr-4 mt-[-10px]">
+    <div className="flex h-[calc(100vh-100px)] md:h-full md:max-h-[calc(100vh-64px)] overflow-x-scroll overflow-y-hidden rounded-xl border bg-white shadow-sm md:mr-4 mt-[-10px] pb-2">
       {/* Left Sidebar for Conversations */}
-      <div className="w-80 border-r bg-[#f8fafc] flex flex-col flex-shrink-0">
+      <div className="flex w-72 md:w-80 border-r bg-[#f8fafc] flex-col shrink-0">
          <div className="p-4 border-b bg-white">
             <h2 className="text-lg font-bold mb-4">Conversations</h2>
             <div className="relative">
@@ -208,7 +231,7 @@ export default function Support() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative bg-white">
+      <div className="flex-1 flex flex-col relative bg-white min-w-[500px]">
          <div className="h-16 border-b flex justify-between items-center px-6 shrink-0 bg-white z-10 relative">
             <div className="flex items-center gap-3">
                <div className="relative">
@@ -225,20 +248,20 @@ export default function Support() {
                      <span>AI SYSTEM ONLINE</span>
                   </p>
                </div>
-            </div>
-            <div className="flex items-center gap-4">
-               <button onClick={() => alert("Model context optimization enabled! Future queries will utilize deeper reasoning tracks.")} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center gap-1 transition-colors border border-blue-100">
+             </div>
+            <div className="flex items-center gap-1 sm:gap-4 overflow-x-auto pr-2 sm:pr-0">
+               <button onClick={() => alert("Model context optimization enabled! Future queries will utilize deeper reasoning tracks.")} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center gap-1 transition-colors border border-blue-100 shrink-0">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  Optimize Context
+                  <span className="hidden lg:inline">Optimize Context</span>
                </button>
-               <button onClick={() => alert("Downloading chat transcript...")} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full" title="Export Transcript">
+               <button onClick={handleExportTranscript} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full shrink-0" title="Export Transcript">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                </button>
-               <button onClick={() => setShowSettingsModal(true)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full" title="Settings">
+               <button onClick={() => setShowSettingsModal(true)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full shrink-0" title="Settings">
                   <Settings className="w-5 h-5" />
                </button>
-               <button onClick={() => setShowHumanModal(true)} className="bg-[#fdf3ec] text-[#d97706] hover:bg-orange-100 font-medium py-1.5 px-4 rounded-lg text-sm flex items-center gap-2 transition-colors border border-orange-200 shadow-sm">
-                  <User size={16} /> Connect to Human
+               <button onClick={() => setShowHumanModal(true)} className="bg-[#fdf3ec] text-[#d97706] hover:bg-orange-100 font-medium py-1.5 px-3 sm:px-4 rounded-lg text-sm flex items-center gap-2 transition-colors border border-orange-200 shadow-sm shrink-0">
+                  <User size={16} /> <span className="hidden sm:inline">Connect to Human</span>
                </button>
             </div>
          </div>
